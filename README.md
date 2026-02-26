@@ -18,7 +18,7 @@ pip install streamlit pandas plotly
 2. Lancement de l'application
 Pour démarrer le tableau de bord, placez-vous dans le dossier racine du projet depuis votre terminal, puis exécutez la commande suivante :
 
-streamlit run login.py
+py -m streamlit run login.py
 
 3. Identifiants de connexion
 L'accès au tableau de bord est sécurisé par un système de rôles. Voici les identifiants de test configurés en dur pour évaluer l'application :
