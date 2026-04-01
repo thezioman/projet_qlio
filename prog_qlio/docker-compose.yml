@@ -1,20 +1,26 @@
 version: "3.9"
 
 services:
-  # 1. La Base de données (On la garde !)
+  # 1. Base de données MySQL
   mysql:
     image: mysql:8.0
     container_name: python_project_db
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: python_auth_db  # J'ai changé le nom de la base
+      MYSQL_DATABASE: python_auth_db
     ports:
-      # TRÈS IMPORTANT : Ton Python se connectera sur le port 3307
       - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
+      - ./init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
 
-  # 2. L'interface de gestion (On la garde pour t'aider)
+  # 2. Interface phpMyAdmin
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: python_project_pma
@@ -24,7 +30,25 @@ services:
     ports:
       - "8081:80"
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+
+  # 3. Application Streamlit
+  app:
+    build: .
+    container_name: python_project_app
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: "3306"
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+    ports:
+      - "8501:8501"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./FestoMES-2025-12-02.sql:/app/FestoMES-2025-12-02.sql
 
 volumes:
   db_data:
