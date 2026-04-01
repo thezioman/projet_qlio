@@ -142,25 +142,36 @@ st.markdown("---")
 c3, c4 = st.columns(2)
 
 with c3:
-    st.markdown('<div class="section-title">Heatmap WIP — Taux d\'occupation par ressource</div>',
+    st.markdown('<div class="section-title">Occupation des lignes de production (0 = libre, 1 = occupe)</div>',
                 unsafe_allow_html=True)
     if not df_wip.empty:
         df_h = df_wip.groupby(["Date_Jour", "Poste"])["Taux_Occupation_Pourcent"].mean().reset_index()
         if not df_h.empty:
-            pivot = df_h.pivot(index="Poste", columns="Date_Jour",
-                               values="Taux_Occupation_Pourcent")
-            fig = px.imshow(pivot,
-                            color_continuous_scale=["#1a5276", "#5dade2", "#aed6f1"],
-                            zmin=0, zmax=100,
-                            labels={"color": "Occupation %"},
-                            aspect="auto")
-            fig.update_layout(height=_H, margin=dict(l=10, r=60, t=10, b=60),
-                              paper_bgcolor=_BG, font=_FONT,
-                              coloraxis_colorbar=dict(
-                                  tickfont=dict(color="white"),
-                                  title=dict(font=dict(color="white"))))
-            fig.update_xaxes(color="white", tickangle=-30)
-            fig.update_yaxes(color="white")
+            # Renomme les postes en "Ligne X" selon leur rang alphabetique
+            postes_sorted = sorted(df_h["Poste"].unique())
+            poste_to_ligne = {p: f"Ligne {i+1}" for i, p in enumerate(postes_sorted)}
+            df_h["Ligne"] = df_h["Poste"].map(poste_to_ligne)
+            # Valeur binaire : occupé = 1, libre = 0
+            df_h["Occupe"] = (df_h["Taux_Occupation_Pourcent"] > 0).astype(int)
+            # Pivot : lignes = dates (Y), colonnes = Ligne X (X)
+            pivot = df_h.pivot_table(index="Date_Jour", columns="Ligne",
+                                     values="Occupe", aggfunc="max").fillna(0)
+            # Limite aux 30 dernières dates pour la lisibilité
+            pivot = pivot.tail(30)
+            fig = go.Figure(go.Heatmap(
+                z=pivot.values,
+                x=pivot.columns.tolist(),
+                y=[str(d) for d in pivot.index],
+                colorscale=[[0, "#1a3a5c"], [1, "#5dade2"]],
+                zmin=0, zmax=1,
+                showscale=False,
+                xgap=2, ygap=2,
+            ))
+            fig.update_layout(height=_H, margin=dict(l=10, r=10, t=10, b=60),
+                              paper_bgcolor=_BG, font=_FONT)
+            fig.update_xaxes(color="white", tickfont=dict(color="white"), side="bottom")
+            fig.update_yaxes(color="white", tickfont=dict(color="white"),
+                             autorange="reversed")
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("Donnees WIP insuffisantes.")
@@ -187,33 +198,41 @@ with c4:
             legend=dict(orientation="h", y=-0.35, font=dict(color="white")),
             plot_bgcolor=_CARD, paper_bgcolor=_BG, font=_FONT,
         )
-        fig.update_xaxes(color="white", tickangle=-45)
+        fig.update_xaxes(color="white", tickfont=dict(color="white"), tickangle=-45)
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Aucune donnee stock.")
 
-# Ligne 2 : Lead Time distribution
-st.markdown('<div class="section-title">Lead Time par commande (minutes)</div>', unsafe_allow_html=True)
+# Ligne 2 : Lead Time moyen par ressource (barres)
+st.markdown('<div class="section-title">Lead Time moyen par ressource (minutes)</div>', unsafe_allow_html=True)
 if not df_lt.empty:
-    # Filtre les valeurs aberrantes (> 1500 min)
     df_lt_clean = df_lt[df_lt["Lead_Time_Minutes"] <= 1500].copy()
     if df_lt_clean.empty:
         df_lt_clean = df_lt.copy()
 
-    fig = px.box(df_lt_clean, x="Date_Jour", y="Lead_Time_Minutes",
-                 labels={"Lead_Time_Minutes": "Lead Time (min)", "Date_Jour": ""},
-                 color_discrete_sequence=["#5dade2"])
-    df_trend = df_lt_clean.groupby("Date_Jour")["Lead_Time_Minutes"].mean().reset_index()
-    fig.add_scatter(x=df_trend["Date_Jour"], y=df_trend["Lead_Time_Minutes"],
-                    mode="lines", name="Moyenne",
-                    line=dict(color="white", width=2, dash="dot"))
-    fig.update_layout(height=320, margin=dict(l=10, r=10, t=10, b=60),
+    # Regroupe par ressource si disponible, sinon par commande
+    if "ID_Ressource" in df_lt_clean.columns:
+        df_bar = df_lt_clean.groupby("ID_Ressource")["Lead_Time_Minutes"].mean().reset_index()
+        df_bar["Label"] = df_bar["ID_Ressource"].apply(lambda x: f"Poste {x}")
+        x_col = "Label"
+    else:
+        df_bar = df_lt_clean.groupby("ID_Commande")["Lead_Time_Minutes"].mean().reset_index()
+        df_bar["Label"] = df_bar["ID_Commande"].apply(lambda x: f"Cmd {x}")
+        x_col = "Label"
+
+    fig = go.Figure(go.Bar(
+        x=df_bar[x_col], y=df_bar["Lead_Time_Minutes"],
+        marker_color="#5dade2",
+    ))
+    fig.update_layout(height=320, margin=dict(l=10, r=10, t=20, b=60),
                       plot_bgcolor=_CARD, paper_bgcolor=_BG, font=_FONT)
-    fig.update_xaxes(color="white", tickangle=-30)
-    fig.update_yaxes(gridcolor="rgba(255,255,255,0.15)", color="white")
+    fig.update_xaxes(color="white", tickfont=dict(color="white"),
+                     showticklabels=False)
+    fig.update_yaxes(gridcolor="rgba(255,255,255,0.15)", color="white",
+                     tickfont=dict(color="white"), title="minutes")
     st.plotly_chart(fig, use_container_width=True)
     if len(df_lt) > len(df_lt_clean):
-        st.caption(f"Note : {len(df_lt) - len(df_lt_clean)} valeurs > 1500 min exclues pour la lisibilite.")
+        st.caption(f"Note : {len(df_lt) - len(df_lt_clean)} valeurs > 1500 min exclues.")
 else:
     st.info("Aucune donnee lead time pour cette periode.")
 

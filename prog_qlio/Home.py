@@ -35,13 +35,17 @@ input, input::placeholder {
     color: #1a1a1a !important;
 }
 div[data-testid="stFormSubmitButton"] button {
-    background: #3d3d3d !important;
+    background: #1a1a1a !important;
     color: white !important;
     border-radius: 6px !important;
     font-size: 15px !important;
     height: 44px !important;
     border: none !important;
     width: 100%;
+}
+div[data-testid="stFormSubmitButton"] button p,
+div[data-testid="stFormSubmitButton"] button span {
+    color: white !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -133,7 +137,7 @@ else:
         st.markdown(
             f"<div style='text-align:center;background:#DFFFD8;border-radius:8px;"
             f"padding:8px 16px;margin-bottom:20px;font-family:Arial;font-size:13px;color:#375623;'>"
-            f"<b>● Données réelles chargées</b> — du {d_start.strftime('%d/%m/%Y')} au {d_end.strftime('%d/%m/%Y')}"
+            f"<b>● Base de données chargée</b> — du {d_start.strftime('%d/%m/%Y')} au {d_end.strftime('%d/%m/%Y')}"
             f"</div>",
             unsafe_allow_html=True,
         )
@@ -151,28 +155,33 @@ else:
         "Performance": "#3d85c8",
         "Qualite":     "#4CAF50",
         "Logistique":  "#C0392B",
+        "Maintenance": "#E67E22",
         "Donnees":     "#7B7B7B",
     }
     DESC_MAP = {
-        "Performance": "performances Opérationnel",
-        "Qualite":     "Qualité",
+        "Performance": "Performances Operationnel",
+        "Qualite":     "Qualite",
         "Logistique":  "Logistique / Flux",
-        "Donnees":     "Données",
+        "Maintenance": "Maintenance",
+        "Donnees":     "Donnees",
     }
 
-    # CSS boutons couleur
-    color_css = ""
-    for i, page in enumerate(pages_ok, 1):
+    # Ciblage par aria-label (Streamlit met le label du bouton comme aria-label)
+    btn_styles = ""
+    for page in pages_ok:
         color = PAGE_COLORS.get(page, "#555")
-        color_css += (
-            f"div[data-testid='stVerticalBlock'] > div:nth-child({i + 3}) button {{"
-            f"background: {color} !important; color: white !important;"
-            f"border-radius: 30px !important; height: 52px !important;"
-            f"font-size: 16px !important; font-weight: bold !important;"
-            f"border: none !important; width: 100% !important; margin-bottom:4px;"
-            f"}}\n"
+        label = DESC_MAP.get(page, page)
+        btn_styles += (
+            f'button[aria-label="{label}"] {{'
+            f'background: {color} !important;'
+            f'color: white !important; border-radius: 30px !important;'
+            f'height: 52px !important; font-size: 16px !important;'
+            f'font-weight: bold !important; border: none !important;}}'
+            f'button[aria-label="{label}"] p,'
+            f'button[aria-label="{label}"] span {{'
+            f'color: white !important;}}'
         )
-    st.markdown(f"<style>{color_css}</style>", unsafe_allow_html=True)
+    st.markdown(f"<style>{btn_styles}</style>", unsafe_allow_html=True)
 
     _, col_btns, _ = st.columns([1, 2, 1])
     with col_btns:

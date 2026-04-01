@@ -1,6 +1,5 @@
 import streamlit as st
 import plotly.graph_objects as go
-import plotly.express as px
 import pandas as pd
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -162,9 +161,9 @@ with c2:
                           legend=dict(orientation="h", yanchor="bottom", y=-0.35,
                                       font=dict(color="white")),
                           plot_bgcolor=_CARD, paper_bgcolor=_BG, font=_FONT)
-        fig.update_xaxes(color="white", tickangle=-30)
+        fig.update_xaxes(color="white", tickfont=dict(color="white"), tickangle=-30)
         fig.update_yaxes(gridcolor="rgba(255,255,255,0.15)", color="white",
-                         title="minutes")
+                         tickfont=dict(color="white"), title="minutes")
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Aucune donnee fiabilite pour cette periode.")
@@ -193,29 +192,10 @@ if not df_rebuts.empty:
         legend=dict(orientation="h", y=-0.3, font=dict(color="white")),
         plot_bgcolor=_CARD, paper_bgcolor=_BG, font=_FONT,
     )
-    fig.update_xaxes(color="white", tickangle=-30)
+    fig.update_xaxes(color="white", tickfont=dict(color="white"), tickangle=-30)
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.info("Aucune donnee rebuts pour cette periode.")
 
-# Ligne 3 : Qualite par ressource
-st.markdown('<div class="section-title">Taux de qualite par ressource (%)</div>',
-            unsafe_allow_html=True)
-if not df_qual.empty:
-    df_qp = df_qual.groupby("Poste")["Taux_Qualite_Pourcent"].mean().reset_index()
-    fig = px.bar(df_qp, x="Poste", y="Taux_Qualite_Pourcent",
-                 color_discrete_sequence=[_BAR],
-                 labels={"Taux_Qualite_Pourcent": "%", "Poste": ""})
-    fig.update_layout(showlegend=False, height=300,
-                      margin=dict(l=10, r=10, t=10, b=60), yaxis_range=[0, 105],
-                      yaxis_ticksuffix="%",
-                      plot_bgcolor=_CARD, paper_bgcolor=_BG, font=_FONT)
-    fig.update_xaxes(color="white", tickangle=-30)
-    fig.update_yaxes(gridcolor="rgba(255,255,255,0.15)", color="white")
-    fig.add_hline(y=85, line_dash="dash", line_color="white",
-                  annotation_text="Cible 85%", annotation_font_color="white")
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.info("Aucune donnee qualite par ressource pour cette periode.")
 
 st.caption("T'EleFan MES 4.0 — Ligne FESTO — IUT Lumiere Lyon 2")

@@ -32,6 +32,9 @@ Application Streamlit (dashboard)
 - Docker Desktop installé et en cours d'exécution
 
 ### Démarrage
+
+Se rendre à la racine du projet avec le terminal de commande et faire la commande suivante : 
+
 ```bash
 docker-compose up --build
 ```

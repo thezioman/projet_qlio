@@ -134,10 +134,6 @@ for col, label, value, unit in [
             unsafe_allow_html=True,
         )
 
-if not df_trs.empty and avg_trs < 30:
-    st.info("Note : le TRS est bas car la machine est utilisee uniquement lors des seances de TP "
-            "(ETAT_MACHINE_EN_MARCHE = 0 la plupart du temps). C'est coherent avec les donnees reelles.")
-
 st.markdown("---")
 
 # Ligne 1 : TRS jauge + Utilisation ressources + Taux de performance
@@ -178,8 +174,9 @@ with c2:
         fig.update_layout(height=_H, margin=dict(l=10, r=30, t=10, b=40),
                           xaxis_range=[0, 100], xaxis_ticksuffix="%",
                           plot_bgcolor=_CARD, paper_bgcolor=_BG, font=_FONT)
-        fig.update_xaxes(gridcolor="rgba(255,255,255,0.2)", color="white")
-        fig.update_yaxes(color="white")
+        fig.update_xaxes(gridcolor="rgba(255,255,255,0.2)", color="white",
+                         tickfont=dict(color="white"))
+        fig.update_yaxes(color="white", tickfont=dict(color="white"))
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Aucune donnee disponibilite pour cette periode.")
@@ -193,8 +190,10 @@ with c3:
         fig.update_traces(line_color=_BAR, line_width=2, marker_color=_BAR)
         fig.update_layout(height=_H, margin=dict(l=10, r=20, t=10, b=40),
                           plot_bgcolor=_CARD, paper_bgcolor=_BG, font=_FONT)
-        fig.update_xaxes(gridcolor="rgba(255,255,255,0.2)", color="white")
-        fig.update_yaxes(gridcolor="rgba(255,255,255,0.15)", color="white")
+        fig.update_xaxes(gridcolor="rgba(255,255,255,0.2)", color="white",
+                         tickfont=dict(color="white"))
+        fig.update_yaxes(gridcolor="rgba(255,255,255,0.15)", color="white",
+                         tickfont=dict(color="white"))
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Aucune donnee performance pour cette periode.")
@@ -209,47 +208,27 @@ if not df_dispo.empty:
     fig.update_layout(height=320, margin=dict(l=10, r=10, t=10, b=60),
                       yaxis_range=[0, 110], yaxis_ticksuffix="%",
                       plot_bgcolor=_CARD, paper_bgcolor=_BG, font=_FONT)
-    fig.update_xaxes(gridcolor="rgba(255,255,255,0.2)", color="white", tickangle=-30)
-    fig.update_yaxes(gridcolor="rgba(255,255,255,0.15)", color="white")
+    fig.update_xaxes(gridcolor="rgba(255,255,255,0.2)", color="white",
+                     tickfont=dict(color="white"), tickangle=-30)
+    fig.update_yaxes(gridcolor="rgba(255,255,255,0.15)", color="white",
+                     tickfont=dict(color="white"))
     fig.add_hline(y=85, line_dash="dash", line_color="white",
                   annotation_text="Cible 85%", annotation_font_color="white")
     st.plotly_chart(fig, use_container_width=True)
 
-# Ligne 3 : Cycle moyen + Taux de charge
-c4, c5 = st.columns(2)
-
-with c4:
-    st.markdown('<div class="section-title">Cycle moyen par ressource (s)</div>', unsafe_allow_html=True)
-    if not df_cycle.empty:
-        df_cy = df_cycle.groupby("Poste")["Cycle_Moyen_Secondes"].mean().reset_index()
-        fig = px.bar(df_cy, x="Poste", y="Cycle_Moyen_Secondes",
-                     color_discrete_sequence=[_BAR],
-                     labels={"Cycle_Moyen_Secondes": "Secondes", "Poste": ""})
-        fig.update_layout(height=320, margin=dict(l=10, r=10, t=10, b=60),
-                          plot_bgcolor=_CARD, paper_bgcolor=_BG, font=_FONT)
-        fig.update_xaxes(color="white", tickangle=-30)
-        fig.update_yaxes(gridcolor="rgba(255,255,255,0.15)", color="white")
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("Aucune donnee cycle pour cette periode.")
-
-with c5:
-    st.markdown('<div class="section-title">Taux de charge par ressource (%)</div>', unsafe_allow_html=True)
-    if not df_charge.empty:
-        df_ch = df_charge.groupby("Poste")["Taux_Charge_Pourcent"].mean().reset_index()\
-                         .sort_values("Taux_Charge_Pourcent")
-        fig = px.bar(df_ch, x="Taux_Charge_Pourcent", y="Poste",
-                     orientation="h", color_discrete_sequence=[_BAR],
-                     labels={"Taux_Charge_Pourcent": "", "Poste": ""})
-        fig.update_layout(height=320, xaxis_range=[0, 100],
-                          margin=dict(l=10, r=30, t=10, b=40), xaxis_ticksuffix="%",
-                          plot_bgcolor=_CARD, paper_bgcolor=_BG, font=_FONT)
-        fig.update_xaxes(gridcolor="rgba(255,255,255,0.2)", color="white")
-        fig.update_yaxes(color="white")
-        fig.add_vline(x=80, line_dash="dash", line_color="white",
-                      annotation_text="Cible 80%", annotation_font_color="white")
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("Aucune donnee taux de charge pour cette periode.")
+# Ligne 3 : Cycle moyen (pleine largeur)
+st.markdown('<div class="section-title">Cycle moyen par ressource (s)</div>', unsafe_allow_html=True)
+if not df_cycle.empty:
+    df_cy = df_cycle.groupby("Poste")["Cycle_Moyen_Secondes"].mean().reset_index()
+    fig = px.bar(df_cy, x="Poste", y="Cycle_Moyen_Secondes",
+                 color_discrete_sequence=[_BAR],
+                 labels={"Cycle_Moyen_Secondes": "Secondes", "Poste": ""})
+    fig.update_layout(height=320, margin=dict(l=10, r=10, t=10, b=60),
+                      plot_bgcolor=_CARD, paper_bgcolor=_BG, font=_FONT)
+    fig.update_xaxes(color="white", tickfont=dict(color="white"), tickangle=-30)
+    fig.update_yaxes(gridcolor="rgba(255,255,255,0.15)", color="white", tickfont=dict(color="white"))
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.info("Aucune donnee cycle pour cette periode.")
 
 st.caption("T'EleFan MES 4.0 — Ligne FESTO — IUT Lumiere Lyon 2")

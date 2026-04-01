@@ -4,24 +4,26 @@ import os
 from werkzeug.security import generate_password_hash, check_password_hash
 
 DROITS_ACCES = {
-    "admin":          ["Performance", "Qualite", "Logistique", "Donnees"],
-    "manager_ops":    ["Performance", "Qualite", "Donnees"],
+    "admin":          ["Performance", "Qualite", "Logistique", "Maintenance", "Donnees"],
+    "manager_ops":    ["Performance", "Qualite", "Maintenance", "Donnees"],
     "manager_supply": ["Logistique", "Qualite", "Donnees"],
 }
 
 PAGE_CONFIG = {
-    "Performance": {"path": "pages/1_Performance.py", "label": "Performances Operationnel", "color": "#3d85c8"},
-    "Qualite":     {"path": "pages/2_Qualite.py",     "label": "Qualite",                   "color": "#4CAF50"},
-    "Logistique":  {"path": "pages/3_Logistique.py",  "label": "Logistique / Flux",         "color": "#C0392B"},
-    "Donnees":     {"path": "pages/5_Donnees.py",     "label": "Donnees",                   "color": "#7B7B7B"},
+    "Performance":  {"path": "pages/1_Performance.py",  "label": "Performances Operationnel", "color": "#3d85c8"},
+    "Qualite":      {"path": "pages/2_Qualite.py",      "label": "Qualite",                   "color": "#4CAF50"},
+    "Logistique":   {"path": "pages/3_Logistique.py",   "label": "Logistique / Flux",         "color": "#C0392B"},
+    "Maintenance":  {"path": "pages/4_Maintenance.py",  "label": "Maintenance",               "color": "#E67E22"},
+    "Donnees":      {"path": "pages/5_Donnees.py",      "label": "Donnees",                   "color": "#7B7B7B"},
 }
 
-SLIDESHOW_ORDER = ["Performance", "Qualite", "Logistique", "Donnees"]
+SLIDESHOW_ORDER = ["Performance", "Qualite", "Logistique", "Maintenance", "Donnees"]
 
 THEME_COLORS = {
     "Performance": "#3d85c8",
     "Qualite":     "#4CAF50",
     "Logistique":  "#C0392B",
+    "Maintenance": "#E67E22",
     "Donnees":     "#7B7B7B",
 }
 
@@ -78,12 +80,12 @@ def render_navbar(active=""):
     sidebar_color = THEME_COLORS.get(active, "#1f4e79")
 
     btn_css = []
-    for i, page in enumerate(pages_ok, 1):
+    for page in pages_ok:
         color = PAGE_CONFIG[page]["color"]
+        label = PAGE_CONFIG[page]["label"]
         is_active = (page == active)
         btn_css.append(
-            f"section[data-testid='stMain'] [data-testid='stHorizontalBlock']:first-of-type "
-            f"[data-testid='column']:nth-child({i}) button {{"
+            f'button[aria-label="{label}"] {{'
             f"background: {color} !important; color: white !important;"
             f"border-radius: 24px !important; border: none !important;"
             f"font-weight: {'bold' if is_active else '500'} !important;"
@@ -92,16 +94,17 @@ def render_navbar(active=""):
             f"outline: {'3px solid rgba(255,255,255,0.7)' if is_active else 'none'} !important;"
             f"outline-offset: -3px !important;"
             f"}}"
+            f'button[aria-label="{label}"] p, button[aria-label="{label}"] span {{'
+            f"color: white !important;}}"
         )
 
-    last = len(pages_ok) + 1
     btn_css.append(
-        f"section[data-testid='stMain'] [data-testid='stHorizontalBlock']:first-of-type "
-        f"[data-testid='column']:nth-child({last}) button {{"
-        f"background: #9E9E9E !important; color: white !important;"
-        f"border-radius: 24px !important; border: none !important;"
-        f"font-size: 13px !important; min-height: 54px !important;"
-        f"}}"
+        'button[aria-label="Deconnexion"] {'
+        "background: #9E9E9E !important; color: white !important;"
+        "border-radius: 24px !important; border: none !important;"
+        "font-size: 13px !important; min-height: 54px !important;}"
+        'button[aria-label="Deconnexion"] p, button[aria-label="Deconnexion"] span {'
+        "color: white !important;}"
     )
 
     st.markdown(f"""<style>
@@ -111,20 +114,26 @@ def render_navbar(active=""):
     [data-testid="stSidebar"] {{
         background-color: {sidebar_color} !important;
     }}
-    [data-testid="stSidebar"] .stMarkdown p,
-    [data-testid="stSidebar"] .stMarkdown span,
-    [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] .st-emotion-cache-ue6h4q {{
+    [data-testid="stSidebar"] * {{color: white !important;}}
+    [data-testid="stSidebar"] hr {{border-color: rgba(255,255,255,0.35) !important;}}
+
+    /* Champs date et texte */
+    [data-testid="stSidebar"] [data-baseweb="input"] > div,
+    [data-testid="stSidebar"] [data-testid="stDateInput"] > div > div,
+    [data-testid="stSidebar"] [data-testid="stDateInput"] input {{
+        background: rgba(0,0,0,0.25) !important;
+        border-color: rgba(255,255,255,0.4) !important;
         color: white !important;
     }}
-    [data-testid="stSidebar"] hr {{border-color: rgba(255,255,255,0.35) !important;}}
-    [data-testid="stSidebar"] [data-baseweb="input"] > div {{
-        background: rgba(255,255,255,0.18) !important;
-        border-color: rgba(255,255,255,0.4) !important;
-    }}
     [data-testid="stSidebar"] [data-baseweb="input"] input {{color: white !important;}}
+
+    /* Calendrier picker reste lisible en foncé */
+    [data-testid="stSidebar"] [data-baseweb="calendar"] * {{color: #1a1a1a !important;}}
+    [data-testid="stSidebar"] [data-baseweb="calendar"] {{background: white !important;}}
+
+    /* Multiselect */
     [data-testid="stSidebar"] [data-baseweb="select"] > div {{
-        background: rgba(255,255,255,0.18) !important;
+        background: rgba(0,0,0,0.25) !important;
         border-color: rgba(255,255,255,0.4) !important;
     }}
     [data-testid="stSidebar"] [data-baseweb="tag"] {{background: rgba(255,255,255,0.25) !important;}}
@@ -137,6 +146,12 @@ def render_navbar(active=""):
     }}
     [data-testid="stSidebar"] button:hover {{background: rgba(255,255,255,0.35) !important;}}
     {chr(10).join(btn_css)}
+
+    /* Force le texte des boutons navbar en blanc */
+    section[data-testid="stMain"] [data-testid="stHorizontalBlock"]:first-of-type button p,
+    section[data-testid="stMain"] [data-testid="stHorizontalBlock"]:first-of-type button span {{
+        color: black !important;
+    }}
     </style>""", unsafe_allow_html=True)
 
     n = len(pages_ok)
@@ -171,12 +186,13 @@ def render_sidebar_filters(show_machine=True):
         f"<div style='background:rgba(255,255,255,0.2);border-radius:8px;"
         f"padding:8px 12px;text-align:center;font-family:Arial;font-size:14px;"
         f"font-weight:bold;color:white;margin-bottom:12px;'>"
-        f"Donnees : {data_start.strftime('%d/%m/%Y')} - {data_end.strftime('%d/%m/%Y')}"
+        f"{data_start.strftime('%d/%m/%Y')} — {data_end.strftime('%d/%m/%Y')}"
         f"</div>",
         unsafe_allow_html=True,
     )
 
-    st.sidebar.markdown("**Periode**")
+    st.sidebar.markdown("<span style='color:white;font-weight:bold;'>Periode</span>",
+                        unsafe_allow_html=True)
     start_date = st.sidebar.date_input(
         "Date debut", value=data_start, key="sidebar_start",
         min_value=data_start, max_value=data_end,
@@ -207,12 +223,13 @@ def render_sidebar_filters(show_machine=True):
         else:
             resource_ids = list(res_map.keys())
 
-    st.sidebar.markdown("---")
+    st.sidebar.markdown("<hr style='border-color:rgba(255,255,255,0.35);'/>",
+                        unsafe_allow_html=True)
 
     # Indicateur source de donnees
     has_real_data = db_available("kpi_trs")
     status_color = "#92D050" if has_real_data else "#FFC000"
-    status_text  = "Donnees reelles (SQL)" if has_real_data else "Mode demonstration"
+    status_text  = "Base de donnees SQL" if has_real_data else "Mode demonstration"
     st.sidebar.markdown(
         f"<div style='background:rgba(0,0,0,0.2);border-radius:6px;padding:6px 10px;"
         f"margin-bottom:8px;font-size:11px;color:white;text-align:center;'>"
@@ -258,11 +275,16 @@ def handle_slideshow(current_page: str, interval_seconds: int = 15):
     if not pages_ok:
         return False
 
-    idx = pages_ok.index(current_page) if current_page in pages_ok else 0
-    next_page = pages_ok[(idx + 1) % len(pages_ok)]
+    try:
+        from streamlit_autorefresh import st_autorefresh
+        count = st_autorefresh(interval=interval_seconds * 1000,
+                               key=f"slideshow_{current_page}")
+    except ImportError:
+        count = 0
 
-    if st.sidebar.button("Page suivante", key=f"slideshow_next_{current_page}",
-                         use_container_width=True):
+    if count > 0:
+        idx = pages_ok.index(current_page) if current_page in pages_ok else 0
+        next_page = pages_ok[(idx + 1) % len(pages_ok)]
         st.switch_page(PAGE_CONFIG[next_page]["path"])
 
     return True
