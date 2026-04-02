@@ -45,7 +45,7 @@ div[data-testid="stFormSubmitButton"] button {
 }
 div[data-testid="stFormSubmitButton"] button p,
 div[data-testid="stFormSubmitButton"] button span {
-    color: black !important;
+    color: white !important;
 }
 </style>
 """, unsafe_allow_html=True)
