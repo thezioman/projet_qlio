@@ -146,12 +146,6 @@ def render_navbar(active=""):
     }}
     [data-testid="stSidebar"] button:hover {{background: rgba(255,255,255,0.35) !important;}}
     {chr(10).join(btn_css)}
-
-    /* Force le texte des boutons navbar en blanc */
-    section[data-testid="stMain"] [data-testid="stHorizontalBlock"]:first-of-type button p,
-    section[data-testid="stMain"] [data-testid="stHorizontalBlock"]:first-of-type button span {{
-        color: black !important;
-    }}
     </style>""", unsafe_allow_html=True)
 
     n = len(pages_ok)
