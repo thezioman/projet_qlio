@@ -31,7 +31,6 @@ Application Streamlit (dashboard)
 ### Prerequis
 
 - **Docker Desktop** installe et en cours d'execution (https://www.docker.com/products/docker-desktop/)
-- Le fichier `FestoMES-2025-12-02.sql` doit etre present a la racine du projet
 
 ### Etape 1 : ouvrir un terminal
 
